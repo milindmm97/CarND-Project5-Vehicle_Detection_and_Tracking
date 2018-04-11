@@ -324,11 +324,13 @@ def main():
     for frame in tqdm(clip.iter_frames()):
         dst = ld.embedDetections(src=frame, pipParams=pipParams)
         resultFrames.append(dst)
+    
 
     resultClip = ImageSequenceClip(resultFrames, fps=25, with_mask=False)
     resultFileName = clipFileName.split('.')[0]
     resultFileName = '{}_out_{}.mp4'.format(resultFileName, aux.timeStamp())
     resultClip.write_videofile(resultFileName, progress_bar=True)
+   
 
 
 if __name__ == '__main__':
