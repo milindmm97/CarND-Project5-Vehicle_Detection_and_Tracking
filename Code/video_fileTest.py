@@ -3,21 +3,10 @@ import numpy as np
 import model
 from scipy.ndimage.measurements import label
 import cv2
-import pickle
+#import pickle
 
-import os.path
+#import os.path
 
-calibrationFile = 'calibration_data.p'
-if not os.path.isfile(calibrationFile):
-    0
-    camMtx = None
-    distortionCoeffs = None
-else:
-    with open(calibrationFile, mode='rb') as f:
-        data = pickle.load(f)
-
-    camMtx = data['cameraMatrix']
-    distortionCoeffs = data['distCoeffs']
 
 
 font                   = cv2.FONT_HERSHEY_SIMPLEX
@@ -32,19 +21,22 @@ confidenceThrd=.5
 diagKernel = [[1, 1, 1],
               [1, 1, 1],
               [1, 1, 1]]
-veHiDepth = 30
+veHiDepth = 45
 vehicleBoxesHistory = []
-gdroupThr=10
+gdroupThr= 10
 groupDiff=.1
 
 count=0
 
+#generate cropped region 
 crop=(400, 660)
 imgInputShape=(720, 1280, 3)
 bottomClip = imgInputShape[0] - crop[1]
 inH = imgInputShape[0] - crop[0] - bottomClip
 inW = imgInputShape[1]
 inCh = imgInputShape[2]
+########################
+
 hotPoints = []
 detectionPointSize = 64
 
@@ -67,6 +59,7 @@ def drawBoxes(img, bBoxes, color=(0, 255, 0), thickness=4):
     :param thickness: 
     :return: 
     """
+    
     for bBox in bBoxes:
 
         bBox = np.array(bBox)
@@ -94,15 +87,18 @@ while(cap.isOpened()):
   if ret == True:
       
       #cv2.imshow('Frame',frame)
-      frame = cv2.undistort(frame, camMtx, distortionCoeffs, None, camMtx)
+      
       
       roi= frame[crop[0]:crop[1],:]
       roiW, roiH = roi.shape[1], roi.shape[0]
       
       roi = np.expand_dims(roi, axis=0)
+      detectionMap= []
       detectionMap = cnnModel.predict(roi)
+      
       predictionMapH, predictionMapW = detectionMap.shape[1], detectionMap.shape[2]
       ratioH, ratioW = roiH / predictionMapH, roiW / predictionMapW
+      
       detectionMap = detectionMap.reshape(detectionMap.shape[1], detectionMap.shape[2])
       detectionMap = detectionMap > confidenceThrd
       labels = label(detectionMap, structure= diagKernel)
@@ -161,8 +157,8 @@ while(cap.isOpened()):
           mask = np.clip(mask, 0, 255)
           #print('haalaa2')
       
-    
-      currentFrameBoxes = label(mask, structure=diagKernel)
+      cv2.imshow('heat',mask)
+      currentFrameBoxes = label(mask)
       
       cmap=cv2.COLORMAP_JET
       heatMapInt = cv2.equalizeHist(mask.astype(np.uint8))
@@ -224,16 +220,11 @@ while(cap.isOpened()):
   else: 
     break
  
-# When everything done, release the video capture object
+
 cap.release()
  
-# Closes all the frames
+
 cv2.destroyAllWindows()
 
-'''
 
-    self.addPip(pipImage=heatMap, dstImage=img,
-                        pipAlpha=alpha, pipResizeRatio=ratio,
-                        origin=(img.shape[1] - heatWidth - 20, 20))
-    
-'''
+
